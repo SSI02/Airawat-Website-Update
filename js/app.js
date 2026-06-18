@@ -33,15 +33,15 @@ let lenis = null;
 function initLenis() {
   if (!Lenis || reduced) return;
   lenis = new Lenis({ lerp: 0.1, smoothWheel: true, wheelMultiplier: 1 });
+  // Keep ScrollTrigger in sync, but drive Lenis from its OWN continuous rAF loop.
+  // (Tying lenis.raf to gsap.ticker lets it stall when GSAP has no active tweens,
+  //  so wheel input wouldn't register until some other event forced a tick.)
   if (hasGSAP && ScrollTrigger) {
-    // Canonical integration: one clock drives both Lenis and ScrollTrigger.
     lenis.on('scroll', ScrollTrigger.update);
-    gsap.ticker.add((time) => lenis.raf(time * 1000));
     gsap.ticker.lagSmoothing(0);
-  } else {
-    const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); };
-    requestAnimationFrame(raf);
   }
+  const raf = (t) => { lenis.raf(t); requestAnimationFrame(raf); };
+  requestAnimationFrame(raf);
 }
 
 /* ---------- Same-page anchor links → smooth Lenis scroll ---------- */
@@ -121,6 +121,15 @@ function intro() {
 /* ---------- Scroll reveals ---------- */
 function initReveals() {
   if (!hasGSAP || !ScrollTrigger || reduced) return;   // reduced-motion → leave content static & visible
+
+  // Whole-panel entrance: each dark/light band fades in as it enters the
+  // viewport (the inner [data-reveal] content rises within it).
+  gsap.utils.toArray('.tone').forEach((band) => {
+    gsap.from(band, {
+      autoAlpha: 0, duration: 0.95, ease: 'power2.out',
+      scrollTrigger: { trigger: band, start: 'top 88%' },
+    });
+  });
 
   // generic blocks
   gsap.utils.toArray('[data-reveal]').forEach((el) => {
@@ -365,12 +374,14 @@ function initCapabilities() {
   const bar = aside.querySelector('.caps__bar i');
   const caps = Array.from(list.querySelectorAll('.cap'));
   const total = caps.length;
+  if (!total) return;                       // nothing to track — never throw on empty
   let active = -1;
 
   function setActive(i) {
     if (i < 0 || i === active) return;
     active = i;
     const cap = caps[i];
+    if (!cap) return;
     if (cur) cur.textContent = cap.dataset.n;
     if (now) now.textContent = cap.dataset.name;
     if (bar) bar.style.transform = `scaleX(${(i + 1) / total})`;

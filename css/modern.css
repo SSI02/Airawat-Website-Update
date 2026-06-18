@@ -27,6 +27,7 @@
   --line: rgba(255, 255, 255, 0.1);
   --line-2: rgba(255, 255, 255, 0.16);
   --stroke: rgba(255, 255, 255, 0.42);   /* clearly-visible outline for ghost/outlined text */
+  --cursor-ring: rgba(255, 255, 255, 0.65);
   --card: rgba(255, 255, 255, 0.025);
   --card-2: rgba(255, 255, 255, 0.045);
 
@@ -72,7 +73,11 @@ body {
   line-height: 1.6;
   color: var(--fg);
   background: var(--bg);
-  overflow-x: hidden;
+  /* `clip` hides horizontal overflow WITHOUT making <body> a scroll container.
+     `overflow-x: hidden` forces overflow-y to compute as `auto`, which turns the
+     body into a second scroller that fights Lenis (wheel input wouldn't register
+     until another event nudged it) and breaks position:sticky. */
+  overflow-x: clip;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -211,7 +216,7 @@ main { position: relative; z-index: 2; }
   transform: translate(-50%, -50%);
 }
 .cursor__ring {
-  width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.65);
+  width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--cursor-ring);
   transform: translate(-50%, -50%);
   transition: width 0.4s var(--ease), height 0.4s var(--ease), background 0.4s var(--ease), border-color 0.4s var(--ease);
   display: grid; place-items: center;
@@ -657,3 +662,160 @@ html { scroll-padding-top: 110px; }
 .footer__led { display: flex; align-items: center; gap: 12px; margin-top: 24px; }
 .footer__led span { font-family: var(--display); font-size: 0.8rem; letter-spacing: 0.04em; color: var(--muted); }
 .footer__led img { height: 30px; width: auto; filter: brightness(0) invert(1); opacity: 0.85; }
+
+/* ============================================================
+   TONE SYSTEM — one site, no modes. Base page is dark (:root).
+   Wrap a run of sections in `.tone tone-light` (or `.tone tone-dark`)
+   to flip that band's surface + text. Tokens are scoped to the band,
+   so text, lines, cards, stroked ghost text and grayscale images all
+   adapt. The topbar uses mix-blend-mode:difference and the cursor is
+   teal, so both stay legible crossing dark <-> light bands.
+   ============================================================ */
+.tone { position: relative; }
+.tone-light, .tone-dark { background: var(--bg); color: var(--fg); }
+.tone-light { color-scheme: light; }
+.tone-dark {
+  --bg: #060709; --bg-2: #0a0d12; --bg-3: #0e131a;
+  --fg: #f3f6f8; --muted: #8a97a4; --muted-2: #5d6873;
+  --line: rgba(255, 255, 255, 0.1); --line-2: rgba(255, 255, 255, 0.16);
+  --stroke: rgba(255, 255, 255, 0.42); --cursor-ring: rgba(255, 255, 255, 0.65);
+  --card: rgba(255, 255, 255, 0.025); --card-2: rgba(255, 255, 255, 0.05);
+  --teal: #2bd9bc; --blue: #5b8cff;
+  --teal-soft: rgba(43, 217, 188, 0.3); --blue-soft: rgba(91, 140, 255, 0.28);
+  color-scheme: dark;
+}
+/* Cursor uses teal (a mid-tone) so it reads on both light and dark bands. */
+.cursor__ring { border-color: var(--teal); }
+.tone-light {
+  --bg: #edf0f3;
+  --bg-2: #f7f8fa;
+  --bg-3: #e3e7ec;
+  --fg: #11161c;
+  --muted: #535e6a;
+  --muted-2: #8893a0;
+  --line: rgba(17, 22, 28, 0.12);
+  --line-2: rgba(17, 22, 28, 0.2);
+  --stroke: rgba(17, 22, 28, 0.42);
+  --cursor-ring: rgba(17, 22, 28, 0.55);
+  --card: rgba(17, 22, 28, 0.028);
+  --card-2: rgba(17, 22, 28, 0.055);
+  --teal: #0ca88d;
+  --blue: #3f6fe8;
+  --teal-soft: rgba(12, 168, 141, 0.3);
+  --blue-soft: rgba(63, 111, 232, 0.28);
+}
+
+/* The homepage hero KEEPS its dark green WebGL plasma in BOTH themes — it's a
+   deliberate dark, immersive moment. So its text stays light regardless of the
+   page theme (the rest of the page themes normally below it). */
+.hero__inner .eyebrow,
+.hero__title,
+.hero__inner .lead,
+.hero__spec b { color: #eef3f5; }
+.hero__inner .eyebrow { color: rgba(238, 243, 245, 0.78); }
+.hero__inner .lead,
+.hero__spec span,
+.scroll-cue { color: rgba(238, 243, 245, 0.72); }
+.hero__foot { border-top-color: rgba(255, 255, 255, 0.16); }
+
+/* Partner tiles: border + softer shadow so the white tile separates on light */
+.tone-light .partner { border-color: var(--line); }
+.tone-light .partner:hover { box-shadow: 0 14px 30px rgba(17, 22, 28, 0.12), 0 0 0 1px var(--teal-soft); }
+
+/* Card hover glow tuned for light */
+.tone-light .card::before { background: radial-gradient(60% 50% at var(--mx, 50%) var(--my, 0%), rgba(12, 168, 141, 0.1), transparent 70%); }
+
+/* Theme-aware brand logos: white in dark, dark in light */
+.footer__logo, .footer__led img, .preloader__logo { filter: brightness(0) invert(1); }
+.tone-light .footer__logo,
+.tone-light .footer__led img,
+.tone-light .preloader__logo { filter: brightness(0); }
+
+/* Subpage page-head grid texture: dark lines on light */
+.tone-light .page-head::after {
+  background:
+    linear-gradient(rgba(17, 22, 28, 0.05) 1px, transparent 1px) 0 0 / 100% 64px,
+    linear-gradient(90deg, rgba(17, 22, 28, 0.05) 1px, transparent 1px) 0 0 / 64px 100%;
+}
+/* Media-frame border a touch firmer on light */
+.tone-light .media-frame { border-color: var(--line-2); }
+
+
+/* ---- Homepage capability rows: full-bleed domain photo BEHIND the text,
+   grayscale by default → full colour on hover. Square corners; the text is
+   carried on a dark scrim so it reads over any photo. ---- */
+.cap:has(.cap__media) {
+  position: relative; display: flex; align-items: flex-end; overflow: hidden;
+  min-height: clamp(230px, 30vw, 380px);
+  padding: clamp(26px, 3.4vw, 48px);
+  border-radius: 0;                                   /* no rounded corners */
+}
+.cap__media {
+  position: absolute; inset: 0; z-index: 0; background: var(--bg-3);
+  filter: grayscale(1) contrast(0.95) brightness(0.88);
+  transition: filter 0.7s var(--ease), transform 0.9s var(--ease);
+}
+.cap__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* legibility scrim: only a soft bottom-up fade under the bottom-aligned text */
+.cap:has(.cap__media)::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(0deg, rgba(6, 7, 9, 0.72) 0%, rgba(6, 7, 9, 0.12) 50%, rgba(6, 7, 9, 0) 78%);
+}
+.cap:has(.cap__media) .cap__body { position: relative; z-index: 2; max-width: 62ch; text-shadow: 0 1px 14px rgba(0, 0, 0, 0.4); }
+.cap:has(.cap__media) .cap__go { z-index: 2; }
+/* text forced light over the photo, independent of the band tone */
+.cap:has(.cap__media) .cap__title { color: #f4f7f9; }
+.cap:has(.cap__media) .cap__desc { color: rgba(244, 247, 249, 0.82); }
+.cap:has(.cap__media) .cap__n,
+.cap:has(.cap__media) .cap__icon,
+.cap:has(.cap__media) .cap__go { color: #f4f7f9; }
+.cap:has(.cap__media):hover .cap__media { filter: grayscale(0) contrast(1.02) brightness(1); transform: scale(1.05); }
+.cap:has(.cap__media):hover .cap__title { color: var(--teal); }
+
+/* ============================================================
+   White-flash fix + artistic band seams + hard image corners
+   ============================================================ */
+/* <html> had no bg, so its default white showed through on overscroll and in
+   any gap above/below the dark body. Paint it dark — no white anywhere. */
+html { background: var(--bg); }
+
+/* Solution / feature imagery: hard, artistic corners (no softening). */
+.media-frame, .cap__media, .cap:has(.cap__media) { border-radius: 0; }
+
+/* Bands meet on clean, flat horizontal edges — no angled cuts. */
+
+/* Subpage masthead fills the viewport like the homepage hero, so the dark top
+   "covers the page" (no light band showing at the very top). Content sits low. */
+.page-head { min-height: 90svh; display: flex; flex-direction: column; justify-content: flex-end; }
+
+/* ============================================================
+   Editorial light bands — read like a clean print spread:
+   a fine top rule marking the dark→light change, and extra air.
+   ============================================================ */
+.tone-light { box-shadow: inset 0 1px 0 var(--line); }
+.tone-light .section { padding-block: clamp(110px, 16vh, 230px); }
+.tone-light .eyebrow { letter-spacing: 0.22em; }
+/* a hairline accent under section eyebrows in light bands */
+.tone-light .sec-head .eyebrow::after,
+.tone-light .manifesto__label::after { background: var(--line); }
+
+/* ============================================================
+   Small-screen adaptations (screen-adaptable refinements)
+   ============================================================ */
+@media (max-width: 600px) {
+  /* Topbar: drop the wide Ministry-of-Education lockup + divider on phones,
+     keep the Airawat mark (display:none beats the inline height). */
+  .topbar__brand .divider,
+  .topbar__brand img[alt*="Ministry"] { display: none; }
+  .topbar__brand img { height: 22px; }
+  /* Full-bleed solution rows need room for the text over the photo. */
+  .cap:has(.cap__media) { min-height: 340px; padding: 24px; }
+  /* Trim the generous editorial air so light bands aren't huge on phones. */
+  .tone-light .section { padding-block: clamp(72px, 12vh, 130px); }
+  /* Masthead a touch shorter so content isn't marooned at the very bottom. */
+  .page-head { min-height: 84svh; }
+}
+@media (max-width: 380px) {
+  .topbar { padding-inline: 16px; }
+  .cap__title { font-size: clamp(1.5rem, 7vw, 2rem); }
+}

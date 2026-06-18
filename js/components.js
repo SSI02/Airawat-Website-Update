@@ -127,7 +127,7 @@ function footerHTML() {
       </div>
       <div class="footer__grid">
         <div class="footer__brand footer__col">
-          <img src="${LOGO}" alt="Airawat Research Foundation" style="height:30px;filter:brightness(0) invert(1)">
+          <img src="${LOGO}" alt="Airawat Research Foundation" class="footer__logo" style="height:30px">
           <p>National Center of Excellence for AI in Sustainable Cities.</p>
           <div class="footer__led">
             <span>Led by</span>
