@@ -13,7 +13,6 @@ const FRAG = `
 precision highp float;
 uniform vec2  u_res;
 uniform float u_time;
-uniform vec2  u_mouse;
 
 // hash + value noise
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
@@ -33,33 +32,29 @@ float fbm(vec2 p){
 void main(){
   vec2 uv = gl_FragCoord.xy / u_res.xy;
   vec2 st = (gl_FragCoord.xy - 0.5*u_res.xy) / u_res.y;
-  float t = u_time * 0.05;
+  float t = u_time * 0.07;                         // calmer, slower flow
 
   // domain warping
-  vec2 q = vec2(fbm(st*1.5 + t), fbm(st*1.5 + vec2(5.2,1.3) - t));
-  vec2 r = vec2(fbm(st*1.5 + 2.0*q + vec2(1.7,9.2) + t*0.7),
-                fbm(st*1.5 + 2.0*q + vec2(8.3,2.8) - t*0.6));
-  float f = fbm(st*1.6 + 2.5*r);
+  vec2 q = vec2(fbm(st*1.7 + t), fbm(st*1.7 + vec2(5.2,1.3) - t));
+  vec2 r = vec2(fbm(st*1.7 + 2.4*q + vec2(1.7,9.2) + t*0.9),
+                fbm(st*1.7 + 2.4*q + vec2(8.3,2.8) - t*0.8));
+  float f = fbm(st*1.8 + 2.8*r);
 
-  // mouse adds a soft warm pull
-  float md = 1.0 - smoothstep(0.0, 0.7, distance(uv, u_mouse));
-  f += md * 0.15;
-
-  vec3 bg   = vec3(0.024, 0.027, 0.035);
-  vec3 teal = vec3(0.168, 0.851, 0.737);
-  vec3 blue = vec3(0.357, 0.549, 1.0);
+  // LIGHT theme: near-white base with teal/blue tints flowing through it
+  vec3 bg   = vec3(0.965, 0.972, 0.980);
+  vec3 teal = vec3(0.34, 0.80, 0.71);
+  vec3 blue = vec3(0.45, 0.60, 1.0);
 
   vec3 col = bg;
-  col = mix(col, blue, smoothstep(0.35, 0.95, f) * 0.55);
-  col = mix(col, teal, smoothstep(0.45, 1.05, f + 0.15*length(r)) * 0.7);
-  col += teal * md * 0.18;
+  col = mix(col, blue, smoothstep(0.32, 0.95, f) * 0.62);
+  col = mix(col, teal, smoothstep(0.42, 1.05, f + 0.18*length(r)) * 0.68);
 
-  // gentle vignette so edges fall to bg
-  float vig = smoothstep(1.25, 0.25, length(st));
+  // gentle vignette so edges fall to the light bg
+  float vig = smoothstep(1.3, 0.2, length(st));
   col = mix(bg, col, vig);
 
   // subtle grain
-  col += (hash(gl_FragCoord.xy + t) - 0.5) * 0.025;
+  col += (hash(gl_FragCoord.xy + t) - 0.5) * 0.015;
 
   gl_FragColor = vec4(col, 1.0);
 }
@@ -98,10 +93,8 @@ function setup(canvas) {
 
   const uRes = gl.getUniformLocation(prog, 'u_res');
   const uTime = gl.getUniformLocation(prog, 'u_time');
-  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const mouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
   let raf = null, running = false, t0 = 0;
 
   function resize() {
@@ -117,22 +110,14 @@ function setup(canvas) {
 
   function frame(now) {
     if (!t0) t0 = now;
-    mouse.x += (mouse.tx - mouse.x) * 0.05;
-    mouse.y += (mouse.ty - mouse.y) * 0.05;
     resize();
     gl.uniform1f(uTime, (now - t0) / 1000);
-    gl.uniform2f(uMouse, mouse.x, mouse.y);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     if (running) raf = requestAnimationFrame(frame);
   }
 
   function start() { if (!running && !reduced) { running = true; raf = requestAnimationFrame(frame); } }
   function stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = null; }
-
-  window.addEventListener('pointermove', (e) => {
-    mouse.tx = e.clientX / window.innerWidth;
-    mouse.ty = 1.0 - e.clientY / window.innerHeight;
-  }, { passive: true });
 
   window.addEventListener('resize', resize);
   resize();

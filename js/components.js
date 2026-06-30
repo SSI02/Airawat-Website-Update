@@ -68,6 +68,7 @@ function transitionHTML() {
 function topbarHTML() {
   return `
   <a href="#main" class="skip">Skip to content</a>
+  <div class="scroll-progress" id="scrollProgress" aria-hidden="true"><i></i></div>
   <header class="topbar" id="topbar">
     <a href="index.html" class="topbar__brand" data-cursor aria-label="Airawat — home">
       <img src="${LOGO}" alt="Airawat Research Foundation">
@@ -119,7 +120,7 @@ function footerHTML() {
           ${items.map((i) => `<a href="${i.href}">${i.label}</a>`).join('')}
         </div>`;
   return `
-  <footer class="footer" id="footer">
+  <footer class="footer tone-dark" id="footer">
     <div class="wrap">
       <div class="footer__cta" data-reveal>
         <span class="eyebrow">Let's build sustainable cities</span>

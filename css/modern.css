@@ -11,25 +11,25 @@
    ---------------------------------------------------------- */
 :root {
   /* Brand theme (unchanged identity) */
-  --teal: #2bd9bc;
-  --blue: #5b8cff;
-  --teal-soft: rgba(43, 217, 188, 0.4);
-  --blue-soft: rgba(91, 140, 255, 0.4);
+  --teal: #0ca88d;                        /* darker teal reads on white; dark sections re-brighten it */
+  --blue: #3f6fe8;
+  --teal-soft: rgba(12, 168, 141, 0.3);
+  --blue-soft: rgba(63, 111, 232, 0.28);
   --accent: linear-gradient(100deg, var(--teal), var(--blue));
 
-  /* Surfaces — committed dark like Lusion */
-  --bg: #060709;
-  --bg-2: #0a0d12;
-  --bg-3: #0e131a;
-  --fg: #f3f6f8;
-  --muted: #8a97a4;
-  --muted-2: #5d6873;
-  --line: rgba(255, 255, 255, 0.1);
-  --line-2: rgba(255, 255, 255, 0.16);
-  --stroke: rgba(255, 255, 255, 0.42);   /* clearly-visible outline for ghost/outlined text */
-  --cursor-ring: rgba(255, 255, 255, 0.65);
-  --card: rgba(255, 255, 255, 0.025);
-  --card-2: rgba(255, 255, 255, 0.045);
+  /* Surfaces — WHITE-DOMINANT base; dark used only for signature feature bands */
+  --bg: #f6f7f9;
+  --bg-2: #ffffff;
+  --bg-3: #eceff2;
+  --fg: #11161c;
+  --muted: #535e6a;
+  --muted-2: #8893a0;
+  --line: rgba(17, 22, 28, 0.12);
+  --line-2: rgba(17, 22, 28, 0.2);
+  --stroke: rgba(17, 22, 28, 0.4);        /* clearly-visible outline for ghost/outlined text */
+  --cursor-ring: rgba(17, 22, 28, 0.55);
+  --card: rgba(17, 22, 28, 0.028);
+  --card-2: rgba(17, 22, 28, 0.05);
 
   /* Type */
   --display: 'Space Grotesk', sans-serif;
@@ -88,8 +88,9 @@ body::before {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(120% 90% at 50% 0%, transparent 60%, rgba(0, 0, 0, 0.5) 100%);
-  mix-blend-mode: multiply;
+  /* whisper-soft depth on the white base (a dark multiply vignette would dirty it) */
+  background: radial-gradient(135% 105% at 50% -8%, transparent 72%, rgba(17, 22, 28, 0.05) 100%);
+  mix-blend-mode: normal;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -153,7 +154,6 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   content: '';
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--teal);
-  box-shadow: 0 0 12px var(--teal);
 }
 .eyebrow.idx::before { display: none; }
 .eyebrow .num { color: var(--teal); font-variant-numeric: tabular-nums; }
@@ -210,13 +210,9 @@ main { position: relative; z-index: 2; }
    CUSTOM CURSOR
    ---------------------------------------------------------- */
 .cursor { position: fixed; top: 0; left: 0; z-index: 99990; pointer-events: none; will-change: transform; }
-.cursor__dot {
-  width: 8px; height: 8px; border-radius: 50%; background: var(--teal);
-  box-shadow: 0 0 10px var(--teal-soft);
-  transform: translate(-50%, -50%);
-}
+.cursor__dot { display: none; }   /* removed — the ring alone tracks the pointer */
 .cursor__ring {
-  width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid var(--cursor-ring);
+  width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--cursor-ring);
   transform: translate(-50%, -50%);
   transition: width 0.4s var(--ease), height 0.4s var(--ease), background 0.4s var(--ease), border-color 0.4s var(--ease);
   display: grid; place-items: center;
@@ -238,12 +234,18 @@ body.cursor-label .cursor__dot { opacity: 0; }
 .topbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 9000;
   display: flex; align-items: center; justify-content: space-between;
-  padding: clamp(18px, 2.4vw, 30px) var(--gutter);
-  mix-blend-mode: difference;            /* logo/menu invert over any bg — very Lusion */
+  padding: clamp(13px, 1.8vw, 22px) var(--gutter);
+  /* Translucent "mirror" glass — heavy blur reflects/frosts the content beneath,
+     a top highlight gives the reflective sheen. Kept very transparent. */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.14));
+  -webkit-backdrop-filter: blur(24px) saturate(1.9) brightness(1.04);
+  backdrop-filter: blur(24px) saturate(1.9) brightness(1.04);
+  border-bottom: 1px solid rgba(17, 22, 28, 0.06);
+  color: #11161c;
 }
 .topbar__brand { display: flex; align-items: center; gap: 12px; }
-.topbar__brand img { height: 26px; width: auto; filter: brightness(0) invert(1); }
-.topbar__brand .divider { width: 1px; height: 22px; background: rgba(255,255,255,0.4); }
+.topbar__brand img { height: 26px; width: auto; filter: brightness(0); }
+.topbar__brand .divider { width: 1px; height: 22px; background: rgba(17, 22, 28, 0.2); }
 .topbar__right { display: flex; align-items: center; gap: clamp(16px, 2vw, 30px); }
 .topbar__links { display: flex; gap: 26px; }
 .topbar__links a { font-family: var(--display); font-size: 0.92rem; font-weight: 400; position: relative; }
@@ -325,7 +327,7 @@ body.menu-open .menu-btn .bars span:nth-child(2) { top: 5px; transform: rotate(-
 .hero__canvas { position: absolute; inset: 0; z-index: 0; }
 .hero__canvas canvas { width: 100%; height: 100%; }
 .hero::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: radial-gradient(90% 70% at 50% 30%, transparent, rgba(6,7,9,0.55) 80%), linear-gradient(to top, var(--bg) 2%, transparent 40%); }
+  background: radial-gradient(95% 75% at 50% 28%, transparent, rgba(246,247,249,0.55) 82%), linear-gradient(to top, var(--bg) 2%, transparent 42%); }
 .hero__inner { position: relative; z-index: 2; width: 100%; padding-bottom: clamp(40px, 8vh, 90px); }
 .hero__title { font-family: var(--display); font-weight: 500; font-size: clamp(2.8rem, 1rem + 9.5vw, 10.5rem); line-height: 0.9; letter-spacing: -0.04em; }
 .hero__title .serif { font-size: 0.92em; }
@@ -452,10 +454,10 @@ a.card:hover .card__arrow { opacity: 1; transform: translate(0,0); color: var(--
    ---------------------------------------------------------- */
 .partners { overflow: hidden; padding-block: 20px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
 .partners__track { display: flex; width: max-content; will-change: transform; }
-.partner { position: relative; flex: 0 0 200px; height: 110px; margin-right: 22px; border-radius: var(--radius); background: #fff; display: grid; place-items: center; padding: 22px; overflow: hidden; border: 1px solid transparent; transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease); }
+.partner { position: relative; flex: 0 0 200px; height: 110px; margin-right: 22px; border-radius: var(--radius); background: #fff; display: grid; place-items: center; padding: 22px; overflow: hidden; border: 1px solid var(--line); transition: transform 0.4s var(--ease), border-color 0.4s var(--ease); }
 .partner img { height: 56px; width: auto; object-fit: contain; }
-.partner__name { position: absolute; inset: 0; border-radius: inherit; display: grid; place-items: center; text-align: center; padding: 12px; background: rgba(6,9,13,0.9); color: var(--fg); font-family: var(--display); font-size: 0.82rem; opacity: 0; transition: opacity 0.3s var(--ease); }
-.partner:hover { transform: translateY(-5px); box-shadow: 0 14px 30px rgba(0,0,0,0.45), 0 0 0 1px var(--teal-soft); }
+.partner__name { position: absolute; inset: 0; border-radius: inherit; display: grid; place-items: center; text-align: center; padding: 12px; background: #11161c; color: #fff; font-family: var(--display); font-size: 0.82rem; opacity: 0; transition: opacity 0.3s var(--ease); }
+.partner:hover { transform: translateY(-5px); border-color: var(--teal); }
 .partner:hover .partner__name { opacity: 1; }
 
 /* ----------------------------------------------------------
@@ -553,10 +555,10 @@ a.card:hover .card__arrow { opacity: 1; transform: translate(0,0); color: var(--
     radial-gradient(45% 50% at 88% 0%, rgba(91,140,255,0.11), transparent 62%);
 }
 .page-head::after {
-  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.5;
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.6;
   background:
-    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 100% 64px,
-    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px) 0 0 / 64px 100%;
+    linear-gradient(rgba(17,22,28,0.04) 1px, transparent 1px) 0 0 / 100% 64px,
+    linear-gradient(90deg, rgba(17,22,28,0.04) 1px, transparent 1px) 0 0 / 64px 100%;
   -webkit-mask-image: radial-gradient(70% 70% at 50% 20%, #000, transparent);
   mask-image: radial-gradient(70% 70% at 50% 20%, #000, transparent);
 }
@@ -664,12 +666,12 @@ html { scroll-padding-top: 110px; }
 .footer__led img { height: 30px; width: auto; filter: brightness(0) invert(1); opacity: 0.85; }
 
 /* ============================================================
-   TONE SYSTEM — one site, no modes. Base page is dark (:root).
-   Wrap a run of sections in `.tone tone-light` (or `.tone tone-dark`)
-   to flip that band's surface + text. Tokens are scoped to the band,
-   so text, lines, cards, stroked ghost text and grayscale images all
-   adapt. The topbar uses mix-blend-mode:difference and the cursor is
-   teal, so both stay legible crossing dark <-> light bands.
+   TONE SYSTEM — one site, no modes. Base page is WHITE (:root).
+   Wrap a run of sections in `.tone tone-dark` for a signature dark
+   feature band (or `.tone tone-light` for a crisp white panel).
+   Tokens are scoped to the band, so text, lines, cards, stroked
+   ghost text and images all adapt. The cursor is teal so it reads
+   on both, and the glass navbar floats above either.
    ============================================================ */
 .tone { position: relative; }
 .tone-light, .tone-dark { background: var(--bg); color: var(--fg); }
@@ -687,9 +689,9 @@ html { scroll-padding-top: 110px; }
 /* Cursor uses teal (a mid-tone) so it reads on both light and dark bands. */
 .cursor__ring { border-color: var(--teal); }
 .tone-light {
-  --bg: #edf0f3;
-  --bg-2: #f7f8fa;
-  --bg-3: #e3e7ec;
+  --bg: #ffffff;
+  --bg-2: #ffffff;
+  --bg-3: #f3f5f7;
   --fg: #11161c;
   --muted: #535e6a;
   --muted-2: #8893a0;
@@ -705,18 +707,14 @@ html { scroll-padding-top: 110px; }
   --blue-soft: rgba(63, 111, 232, 0.28);
 }
 
-/* The homepage hero KEEPS its dark green WebGL plasma in BOTH themes — it's a
-   deliberate dark, immersive moment. So its text stays light regardless of the
-   page theme (the rest of the page themes normally below it). */
-.hero__inner .eyebrow,
-.hero__title,
-.hero__inner .lead,
-.hero__spec b { color: #eef3f5; }
-.hero__inner .eyebrow { color: rgba(238, 243, 245, 0.78); }
+/* The homepage hero is now LIGHT-themed (pale plasma), so its text is dark ink
+   like the rest of the white-dominant page. */
+.hero__title, .hero__spec b { color: var(--fg); }
+.hero__inner .eyebrow { color: var(--muted); }
 .hero__inner .lead,
 .hero__spec span,
-.scroll-cue { color: rgba(238, 243, 245, 0.72); }
-.hero__foot { border-top-color: rgba(255, 255, 255, 0.16); }
+.scroll-cue { color: var(--muted); }
+.hero__foot { border-top-color: var(--line); }
 
 /* Partner tiles: border + softer shadow so the white tile separates on light */
 .tone-light .partner { border-color: var(--line); }
@@ -725,11 +723,11 @@ html { scroll-padding-top: 110px; }
 /* Card hover glow tuned for light */
 .tone-light .card::before { background: radial-gradient(60% 50% at var(--mx, 50%) var(--my, 0%), rgba(12, 168, 141, 0.1), transparent 70%); }
 
-/* Theme-aware brand logos: white in dark, dark in light */
-.footer__logo, .footer__led img, .preloader__logo { filter: brightness(0) invert(1); }
-.tone-light .footer__logo,
-.tone-light .footer__led img,
-.tone-light .preloader__logo { filter: brightness(0); }
+/* Brand logos: dark on the white base, white inside dark feature bands. */
+.footer__logo, .footer__led img, .preloader__logo { filter: brightness(0); }
+.tone-dark .footer__logo,
+.tone-dark .footer__led img,
+.tone-dark .preloader__logo { filter: brightness(0) invert(1); }
 
 /* Subpage page-head grid texture: dark lines on light */
 .tone-light .page-head::after {
@@ -819,3 +817,104 @@ html { background: var(--bg); }
   .topbar { padding-inline: 16px; }
   .cap__title { font-size: clamp(1.5rem, 7vw, 2rem); }
 }
+
+/* ============================================================
+   Important / highlighted accent words → teal underline emphasis.
+   (text-decoration-color is independent of the gradient text-fill,
+   so it stays visible on .grad words.) Excludes big stat numerals.
+   ============================================================ */
+.grad, .serif {
+  text-decoration-line: underline;
+  text-decoration-color: var(--teal);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.15em;
+}
+.stat__num .grad, .stat__num .serif, .caps__index .grad, [data-count] { text-decoration: none; }
+
+/* ============================================================
+   TESTIMONIALS — rotating quotes in a dark feature band.
+   Crossfade transition driven by GSAP (initTestimonials).
+   ============================================================ */
+.tmonials { margin-top: clamp(18px, 3vw, 40px); }
+/* Stage is a single-cell grid: all quotes occupy the same cell, so the box
+   auto-sizes to the TALLEST quote (no fixed height needed) and they crossfade. */
+.tmonials__stage { display: grid; }
+.tmonial { grid-area: 1 / 1; display: grid; grid-template-columns: clamp(150px, 19vw, 220px) 1fr; gap: clamp(26px, 4vw, 60px); align-items: center; opacity: 0; visibility: hidden; }
+.tmonial.is-active { opacity: 1; visibility: visible; }
+/* image on the LEFT — fixed column + full (uncropped) image, so every photo sits
+   at the same place and proportion; centred so the quote's vertical midline meets
+   the image's vertical midline. */
+.tmonial__photo { grid-column: 1; grid-row: 1; align-self: center; width: 100%; height: auto; border-radius: 16px; border: 1px solid var(--line-2); background: var(--bg-3); }
+.tmonial__main { grid-column: 2; grid-row: 1; align-self: center; min-width: 0; }
+.tmonial__q { position: relative; font-family: var(--display); font-weight: 400; font-size: clamp(1.05rem, 0.9rem + 0.7vw, 1.45rem); line-height: 1.5; letter-spacing: -0.01em; max-width: 62ch; }
+.tmonial__q:first-of-type { padding-top: 0.35em; }
+.tmonial__q + .tmonial__q { margin-top: 0.7em; }
+.tmonial__q:first-of-type::before { content: '\201C'; position: absolute; left: -0.06em; top: -0.4em; font-size: 2.2em; line-height: 1; color: var(--teal); opacity: 0.4; }
+.tmonial__by { display: flex; flex-direction: column; gap: 4px; margin-top: clamp(20px, 2.5vw, 30px); }
+.tmonial__name { font-family: var(--display); font-weight: 500; font-size: 1.05rem; }
+.tmonial__role { color: var(--muted); font-size: 0.9rem; }
+@media (max-width: 680px) {
+  .tmonial { grid-template-columns: 1fr; gap: 24px; justify-items: start; }
+  .tmonial__main, .tmonial__photo { grid-column: 1; grid-row: auto; }
+  .tmonial__photo { width: clamp(120px, 36vw, 170px); order: -1; }
+}
+/* Pill nav — the ACTIVE pill widens and its inner fill IS the auto-advance timer
+   (it shows which quote we're on AND how long until the next). */
+.tmonials__nav { display: flex; gap: 10px; margin-top: clamp(30px, 4vw, 52px); }
+.tmonials__dot { position: relative; width: 26px; height: 9px; padding: 0; border-radius: 100px; background: var(--line-2); overflow: hidden; cursor: pointer; transition: width 0.5s var(--ease), background 0.4s var(--ease); }
+.tmonials__dot:hover { background: var(--muted); }
+.tmonials__dot.is-active { width: 66px; }
+.tmonials__dot i { position: absolute; inset: 0; transform-origin: left; transform: scaleX(0); background: var(--accent); border-radius: inherit; }
+
+/* ============================================================
+   Navbar adapts to the section behind it (JS toggles .over-dark).
+   Light sections → dark ink on light frost; dark feature bands →
+   light text on dark-tinted frost. Keeps the translucent mirror glass.
+   ============================================================ */
+.topbar { transition: color 0.35s var(--ease), background 0.35s var(--ease); }
+.topbar__brand img { transition: filter 0.35s var(--ease); }
+.topbar.over-dark { color: #fff; background: linear-gradient(180deg, rgba(10, 13, 18, 0.42), rgba(10, 13, 18, 0.14)); border-bottom-color: rgba(255, 255, 255, 0.1); }
+.topbar.over-dark .topbar__brand img { filter: brightness(0) invert(1); }
+.topbar.over-dark .topbar__brand .divider { background: rgba(255, 255, 255, 0.45); }
+
+/* Cursor: friendlier on forms — show the native text caret on inputs and hide
+   the custom ring there, so typing/selection feels natural. */
+@media (pointer: fine) {
+  body.has-cursor input, body.has-cursor textarea, body.has-cursor select { cursor: auto !important; }
+}
+body.cursor-text .cursor { opacity: 0; }
+
+/* ============================================================
+   Premium details — refined slim scrollbar
+   ============================================================ */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(17, 22, 28, 0.18); border-radius: 100px; border: 3px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(17, 22, 28, 0.34); background-clip: content-box; }
+* { scrollbar-width: thin; scrollbar-color: rgba(17, 22, 28, 0.22) transparent; }
+
+/* ============================================================
+   Premium + UX details — scroll progress, refined focus, kerning
+   ============================================================ */
+.scroll-progress { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 9500; pointer-events: none; }
+.scroll-progress i { display: block; height: 100%; transform-origin: left; transform: scaleX(0); background: var(--accent); will-change: transform; }
+
+/* Refined, accessible focus ring */
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 4px; border-radius: 4px; }
+
+/* Crisper text rendering */
+body { font-kerning: normal; font-feature-settings: 'kern' 1; }
+
+/* ============================================================
+   PREMIUM PASS — film grain, motion bases, micro-interactions
+   ============================================================ */
+/* Whisper-soft film grain over the whole page — makes flat white feel tactile. */
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 3000; pointer-events: none;
+  opacity: 0.035; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='160'%20height='160'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.85'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Feature media: subtle slow zoom on hover (depth). */
+.media-frame img { transition: transform 0.9s var(--ease); }
+.split__media:hover .media-frame img { transform: scale(1.04); }

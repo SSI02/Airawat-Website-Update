@@ -135,9 +135,9 @@ function initReveals() {
   gsap.utils.toArray('[data-reveal]').forEach((el) => {
     const kids = el.hasAttribute('data-reveal-children') ? el.children : [el];
     gsap.from(kids, {
-      y: 46, opacity: 0, duration: 1, ease: 'power3.out',
-      stagger: el.hasAttribute('data-reveal-children') ? 0.08 : 0,
-      scrollTrigger: { trigger: el, start: 'top 85%' },
+      y: 48, opacity: 0, duration: 1.15, ease: 'power3.out',
+      stagger: el.hasAttribute('data-reveal-children') ? 0.1 : 0,
+      scrollTrigger: { trigger: el, start: 'top 86%' },
     });
   });
 
@@ -145,9 +145,17 @@ function initReveals() {
   gsap.utils.toArray('[data-split]:not([data-hero] [data-split])').forEach((el) => {
     const lines = splitLines(el);
     gsap.from(lines, {
-      yPercent: 110, duration: 1, ease: 'expo.out', stagger: 0.05,
+      yPercent: 110, duration: 1.15, ease: 'expo.out', stagger: 0.07,
       scrollTrigger: { trigger: el, start: 'top 88%' },
     });
+  });
+
+  // image clip-reveal — feature media wipes up behind a mask as it enters
+  gsap.utils.toArray('.media-frame').forEach((el) => {
+    gsap.fromTo(el,
+      { clipPath: 'inset(0% 0% 100% 0%)' },
+      { clipPath: 'inset(0% 0% 0% 0%)', duration: 1.1, ease: 'power3.inOut',
+        scrollTrigger: { trigger: el, start: 'top 86%' } });
   });
 
   // parallax
@@ -216,21 +224,26 @@ function initCursor() {
 
   window.addEventListener('pointermove', (e) => { x = e.clientX; y = e.clientY; }, { passive: true });
   function loop() {
-    rx += (x - rx) * 0.18; ry += (y - ry) * 0.18;
-    dot.style.transform = `translate(${x}px, ${y}px) translate(-50%,-50%)`;
+    // ring is the sole pointer now → track tightly (0.35) so it feels precise
+    rx += (x - rx) * 0.35; ry += (y - ry) * 0.35;
+    if (dot) dot.style.transform = `translate(${x}px, ${y}px) translate(-50%,-50%)`;
     ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%,-50%)`;
     requestAnimationFrame(loop);
   }
   loop();
 
-  const hoverSel = 'a, button, input, textarea, select, [data-cursor], .card';
+  // Text fields → native caret (custom ring hidden, see .cursor-text in CSS).
+  const textSel = 'input:not([type=submit]):not([type=button]):not([type=checkbox]):not([type=radio]), textarea, [contenteditable="true"]';
+  const hoverSel = 'a, button, select, [data-cursor], .card';
   document.addEventListener('pointerover', (e) => {
     const t = e.target.closest('[data-cursor-label]');
     if (t) { label.textContent = t.dataset.cursorLabel || 'View'; document.body.classList.add('cursor-label'); return; }
+    if (e.target.closest(textSel)) { document.body.classList.add('cursor-text'); return; }
     if (e.target.closest(hoverSel)) document.body.classList.add('cursor-hover');
   });
   document.addEventListener('pointerout', (e) => {
     if (e.target.closest('[data-cursor-label]')) document.body.classList.remove('cursor-label');
+    if (e.target.closest(textSel)) document.body.classList.remove('cursor-text');
     if (e.target.closest(hoverSel)) document.body.classList.remove('cursor-hover');
   });
 }
@@ -396,6 +409,138 @@ function initCapabilities() {
   setActive(0);
 }
 
+/* ---------- Testimonials (rotating quotes; visible auto-advance timer) ---------- */
+function initTestimonials() {
+  const root = document.querySelector('[data-tmonials]');
+  if (!root) return;
+  const items = Array.from(root.querySelectorAll('.tmonial'));
+  const dots = Array.from(root.querySelectorAll('.tmonials__dot'));
+  const fills = dots.map((d) => d.querySelector('i'));
+  if (items.length < 2) return;
+  const DUR = 6;
+  let i = 0, tween = null;
+
+  function paint(n) {
+    dots.forEach((d, k) => {
+      d.classList.toggle('is-active', k === n);
+      d.setAttribute('aria-current', k === n ? 'true' : 'false');
+    });
+  }
+  function show(n) {
+    if (n === i) return;
+    const prev = items[i], next = items[n];
+    i = n; paint(n);
+    if (hasGSAP && !reduced) {
+      // gentle, mostly-crossfade transition (minimal travel) for a soft, premium feel
+      gsap.to(prev, { autoAlpha: 0, y: -8, duration: 0.7, ease: 'power2.inOut' });
+      gsap.fromTo(next, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 1.0, ease: 'power2.out' });
+    } else {
+      items.forEach((it, k) => it.classList.toggle('is-active', k === n));
+    }
+  }
+  // The fill inside the ACTIVE pill IS the timer — it drives the auto-advance.
+  function start() {
+    if (!hasGSAP || reduced) return;
+    if (tween) tween.kill();
+    fills.forEach((f) => f && gsap.set(f, { scaleX: 0 }));
+    const fill = fills[i];
+    if (!fill) return;
+    tween = gsap.fromTo(fill, { scaleX: 0 }, {
+      scaleX: 1, duration: DUR, ease: 'none',
+      onComplete: () => { show((i + 1) % items.length); start(); },
+    });
+  }
+
+  if (hasGSAP && !reduced) items.forEach((it, k) => { if (k) gsap.set(it, { autoAlpha: 0 }); });
+  dots.forEach((d, k) => d.addEventListener('click', () => { show(k); start(); }));
+  root.addEventListener('pointerenter', () => tween && tween.pause());   // pause on hover
+  root.addEventListener('pointerleave', () => tween && tween.resume());
+  paint(0);
+  start();
+}
+
+/* ---------- Scroll progress indicator (premium wayfinding) ---------- */
+function initScrollProgress() {
+  const bar = document.querySelector('#scrollProgress i');
+  if (!bar) return;
+  function update() {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    const p = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
+    bar.style.transform = `scaleX(${p})`;
+  }
+  update();
+  if (lenis) lenis.on('scroll', update);
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+}
+
+/* ---------- Graceful image fade-in (no pop as images decode) ---------- */
+function initImageReveal() {
+  document.querySelectorAll('main img, #site-footer img').forEach((img) => {
+    if (img.complete && img.naturalWidth) return;     // already painted — leave it
+    img.style.opacity = '0';
+    img.style.transition = 'opacity 0.7s var(--ease)';
+    const show = () => { img.style.opacity = '1'; };
+    img.addEventListener('load', show, { once: true });
+    img.addEventListener('error', show, { once: true });
+    setTimeout(show, 4000);                            // safety: never stay invisible
+  });
+}
+
+/* ---------- Navbar tone: flip nav colour when a dark band is behind it ---------- */
+function initNavTone() {
+  const topbar = document.getElementById('topbar');
+  if (!topbar) return;
+  let darks = Array.from(document.querySelectorAll('.tone-dark'));
+  function update() {
+    const y = 22;                 // a point inside the (fixed) navbar band
+    let onDark = false;
+    for (const el of darks) {
+      const r = el.getBoundingClientRect();
+      if (r.top <= y && r.bottom >= y) { onDark = true; break; }
+    }
+    topbar.classList.toggle('over-dark', onDark);
+  }
+  update();
+  if (lenis) lenis.on('scroll', update);
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', () => { darks = Array.from(document.querySelectorAll('.tone-dark')); update(); });
+}
+
+/* ---------- Hero depth (scroll-linked plasma zoom + headline parallax) ---------- */
+function initScrollHero() {
+  if (!hasGSAP || !ScrollTrigger || reduced) return;
+  const hero = document.querySelector('.hero[data-hero]');
+  if (!hero) return;
+  const canvas = hero.querySelector('.hero__canvas');
+  const inner = hero.querySelector('.hero__inner');
+  if (canvas) gsap.to(canvas, {
+    scale: 1.16, ease: 'none',
+    scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
+  });
+  if (inner) gsap.to(inner, {
+    yPercent: -12, autoAlpha: 0.25, ease: 'none',
+    scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
+  });
+}
+
+/* ---------- Scroll-velocity stretch on the capability photos (premium motion) ---------- */
+function initVelocity() {
+  if (!lenis || reduced) return;
+  const imgs = document.querySelectorAll('.cap__media img');
+  if (!imgs.length) return;
+  let cur = 0;
+  function loop() {
+    const v = lenis.velocity || 0;
+    const target = Math.max(-1, Math.min(1, v / 35));
+    cur += (target - cur) * 0.08;
+    const sy = (1 + Math.min(0.05, Math.abs(cur) * 0.05)).toFixed(3);
+    for (let k = 0; k < imgs.length; k++) imgs[k].style.transform = `scaleY(${sy})`;
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+
 /* ---------- Boot ---------- */
 function boot() {
   injectChrome();
@@ -409,10 +554,16 @@ function boot() {
   initPartners();
   initCapabilities();
   initCardGlow();
+  initTestimonials();
+  initNavTone();
+  initScrollProgress();
+  initImageReveal();
+  initVelocity();
 
   runPreloader(() => {
     intro();
     initReveals();
+    initScrollHero();
     if (ScrollTrigger) {
       ScrollTrigger.refresh();
       // re-measure once everything (fonts, images, partner logos) has loaded
